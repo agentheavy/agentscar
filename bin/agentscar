@@ -1,0 +1,341 @@
+#!/usr/bin/env bash
+# agentscar — blameless postmortems for your coding agent.
+# Auto-memory remembers. It doesn't learn.
+# Zero dependencies: bash 3.2+. MIT.
+
+set -u
+
+VERSION="0.1.0"
+SCAR_DIR=".agentscar"
+LOG_FILE="$SCAR_DIR/log.md"
+TODAY="$(date +%Y-%m-%d)"
+
+die() { printf 'agentscar: %s\n' "$*" >&2; exit 1; }
+say() { printf '%s\n' "$*"; }
+prompt() { printf '%s' "$1" >&2; }
+
+usage() {
+  cat <<'EOF'
+agentscar — blameless postmortems for your coding agent
+
+USAGE
+  agentscar init [--claude]   set up .agentscar/ in the current directory
+                              (--claude also installs the Claude Code skill)
+  agentscar new               guided postmortem -> log entry + guardrail skeleton
+  agentscar log [--type T] [--severity S]
+                              show the log; filter by failure type / severity
+  agentscar help | version
+
+FAILURE TYPES
+  wrong-assumption    agent silently resolved an ambiguity and ran with it
+  destructive-action  irreversible command without human approval
+  verification-skip   claimed "done/works" without evidence
+  instruction-drift   the rule existed; attention lost it
+  spec-drift          built X-prime when you asked for X
+  context-loss        a past decision quietly reversed
+
+ROUTING RULE
+  hook > rule > skill > test — the strongest enforcement layer that fits.
+EOF
+}
+
+# ---------- embedded templates (canonical copies live in templates/) ----------
+
+write_push_guard() {
+  cat > "$1" <<'EOF'
+#!/usr/bin/env bash
+# agentscar guardrail: push-guard
+# Blocks any push when the remote branch has commits you don't have locally
+# (e.g. CI-bot commits). Memory alone did not hold this — so it is enforced here.
+# Wire as: .git/hooks/pre-push, or your agent CLI's pre-tool hook.
+# Contract: exit 0 = allow, exit 1 = block.
+set -u
+branch="$(git symbolic-ref --short HEAD 2>/dev/null)" || exit 0
+remote="${1:-origin}"
+git fetch --quiet "$remote" "$branch" 2>/dev/null || exit 0  # no remote branch yet -> allow
+local_ref="$(git rev-parse HEAD 2>/dev/null)" || exit 0
+remote_ref="$(git rev-parse "$remote/$branch" 2>/dev/null)" || exit 0
+if [ "$local_ref" != "$remote_ref" ] && ! git merge-base --is-ancestor "$remote_ref" "$local_ref"; then
+  printf 'push-guard: %s/%s has commits not in your local branch — pull/rebase first.\n' "$remote" "$branch" >&2
+  exit 1
+fi
+exit 0
+EOF
+}
+
+write_confirm_destructive() {
+  cat > "$1" <<'EOF'
+#!/usr/bin/env bash
+# agentscar guardrail: confirm-destructive
+# Irreversible commands require an explicit human token.
+# Wire as a command wrapper or your agent CLI's pre-tool hook; pass the
+# proposed command as arguments:  hook-confirm-destructive.sh git push --force
+# Contract: exit 0 = allow, exit 1 = block.
+set -u
+cmd="$*"
+pattern='--force|-f |force-push|--hard|rm -rf|clean -fd|branch -D|drop table|drop database'
+if printf '%s' "$cmd" | grep -Eiq -e "$pattern"; then
+  if [ "${AGENTSCAR_APPROVE:-}" = "yes" ]; then
+    exit 0
+  fi
+  printf 'confirm-destructive: "%s" looks irreversible.\n' "$cmd" >&2
+  printf 're-run with AGENTSCAR_APPROVE=yes after a human has read the command.\n' >&2
+  exit 1
+fi
+exit 0
+EOF
+}
+
+write_blank_hook() {
+  cat > "$1" <<'EOF'
+#!/usr/bin/env bash
+# agentscar guardrail: <name me>
+# Born from: .agentscar/log.md (incident line appended below)
+# Contract: exit 0 = allow, exit 1 = block.
+# Wire me into the enforcement point: .git/hooks/, agent CLI pre-tool hook, or CI.
+set -u
+
+# TODO: deterministic check goes here. Prose runs on attention; this runs on exit 1.
+exit 0
+EOF
+}
+
+write_rule_skeleton() {
+  cat > "$1" <<'EOF'
+---
+type: guardrail
+status: draft
+---
+
+# Rule: <one-line constraint, imperative>
+
+- **Constraint:** what must (or must never) happen — one sentence.
+- **Why:** link the incident: `.agentscar/log.md` entry `<date · type>`.
+- **How to apply:** the concrete behavior expected next time.
+- **Layer check:** could this be a hook instead? If yes, promote it — rules degrade with context, hooks don't.
+- **last-reviewed:** YYYY-MM-DD
+EOF
+}
+
+write_skill() {
+  cat > "$1" <<'EOF'
+---
+name: agentscar
+description: Run a blameless postmortem after an agent incident — a wrong or destructive action, a false "done", an ignored instruction, wrong scope, or a forgotten decision. Also use when the user says "postmortem this" or "agentscar new".
+---
+
+# agentscar — postmortem flow
+
+The log and guardrails live in `.agentscar/` (run `agentscar init` if missing).
+
+When an incident happens (or the user invokes this skill):
+
+1. **Facts first.** One honest sentence about what happened — observable facts, no defense.
+2. **Root cause, blameless.** Ask "why" 3–5 times. "The agent was careless" is never a root cause: name a mechanism that can be changed (a missing check, an unstated constraint, prose too far from the action).
+3. **Classify** as exactly one of: wrong-assumption · destructive-action · verification-skip · instruction-drift · spec-drift · context-loss (see docs/failure-types.md in the agentscar repo).
+4. **Route the guardrail** to the strongest layer that fits: hook > rule > skill > test.
+   - destructive-action / instruction-drift -> hook (start from `.agentscar/templates/`)
+   - verification-skip -> evidence gate or regression test
+   - wrong-assumption / spec-drift / context-loss -> rule (`.agentscar/templates/rule-skeleton.md`)
+5. **Propose, never apply.** Show the user (a) the log entry in the exact format below and (b) the guardrail file as a diff. WAIT for explicit approval. Do not write anything before it.
+6. **On approval only:** insert the entry at the top of `.agentscar/log.md` (right below the header — newest first), create the guardrail file, set `Status: open`, and remind the user to flip it to `shipped` once the guardrail is wired in.
+
+Log entry format (verbatim):
+
+    ## YYYY-MM-DD · <type> · <low|medium|high>
+    **What happened:** <one sentence>
+    **Root cause:** <why -> why -> why>
+    **Guardrail:** <path> (<layer> layer)
+    **Status:** open · last-reviewed: YYYY-MM-DD
+EOF
+}
+
+# ---------- commands ----------
+
+cmd_init() {
+  claude_flag="no"
+  [ "${1:-}" = "--claude" ] && claude_flag="yes"
+
+  mkdir -p "$SCAR_DIR/rules" "$SCAR_DIR/hooks" "$SCAR_DIR/templates"
+
+  if [ ! -f "$LOG_FILE" ]; then
+    cat > "$LOG_FILE" <<EOF
+---
+type: postmortem
+generated:
+  by: agentscar/$VERSION
+  at: $TODAY
+status: stable
+---
+
+# agentscar log
+
+One incident = one entry. An entry does not close without a guardrail;
+a guardrail is not written without an incident. Newest first.
+EOF
+    say "created $LOG_FILE"
+  else
+    say "$LOG_FILE already exists — left untouched"
+  fi
+
+  cat > "$SCAR_DIR/index.md" <<'EOF'
+---
+okf_version: "0.2"
+type: index
+---
+
+Blameless-postmortem bundle: incident log in `log.md` (newest first), guardrail rules in `rules/`, hooks in `hooks/`.
+EOF
+  say "created $SCAR_DIR/index.md"
+
+  write_push_guard          "$SCAR_DIR/templates/hook-push-guard.sh"
+  write_confirm_destructive "$SCAR_DIR/templates/hook-confirm-destructive.sh"
+  write_rule_skeleton       "$SCAR_DIR/templates/rule-skeleton.md"
+  chmod +x "$SCAR_DIR/templates/hook-push-guard.sh" "$SCAR_DIR/templates/hook-confirm-destructive.sh"
+  say "templates ready in $SCAR_DIR/templates/"
+
+  if [ -d ".claude" ] || [ "$claude_flag" = "yes" ]; then
+    mkdir -p .claude/skills/agentscar
+    write_skill .claude/skills/agentscar/SKILL.md
+    say "Claude Code skill installed: .claude/skills/agentscar/SKILL.md"
+  else
+    say "hint: run 'agentscar init --claude' to also install the Claude Code skill"
+  fi
+}
+
+cmd_new() {
+  [ -f "$LOG_FILE" ] || die "no $LOG_FILE — run 'agentscar init' first"
+
+  prompt "What happened (one honest sentence): "
+  read -r what || what=""
+  [ -n "$what" ] || die "an empty incident is not an incident"
+
+  root=""
+  i=1
+  while [ "$i" -le 5 ]; do
+    prompt "Why? ($i/5, empty line to stop): "
+    read -r why || why=""
+    [ -n "$why" ] || break
+    if [ -z "$root" ]; then root="$why"; else root="$root -> $why"; fi
+    i=$((i + 1))
+  done
+  [ -n "$root" ] || die "root cause required — blameless, name a mechanism you control"
+
+  {
+    printf 'Failure type:\n'
+    printf '  1) wrong-assumption   2) destructive-action  3) verification-skip\n'
+    printf '  4) instruction-drift  5) spec-drift          6) context-loss\n'
+  } >&2
+  prompt "Type [1-6]: "
+  read -r tnum || tnum=""
+  case "${tnum:-}" in
+    1) type="wrong-assumption"   ; rec="rule" ;;
+    2) type="destructive-action" ; rec="hook" ;;
+    3) type="verification-skip"  ; rec="test" ;;
+    4) type="instruction-drift"  ; rec="hook" ;;
+    5) type="spec-drift"         ; rec="rule" ;;
+    6) type="context-loss"       ; rec="rule" ;;
+    *) die "pick 1-6" ;;
+  esac
+
+  prompt "Severity [1=low 2=medium 3=high] (default 2): "
+  read -r snum || snum=""
+  case "${snum:-2}" in
+    1) sev="low" ;;
+    3) sev="high" ;;
+    *) sev="medium" ;;
+  esac
+
+  printf 'Guardrail layer — recommended for %s: %s\n' "$type" "$rec" >&2
+  prompt "Layer [1=hook 2=rule 3=skill 4=test] (empty = recommended): "
+  read -r lnum || lnum=""
+  case "${lnum:-}" in
+    1) layer="hook" ;;
+    2) layer="rule" ;;
+    3) layer="skill" ;;
+    4) layer="test" ;;
+    "") layer="$rec" ;;
+    *) die "pick 1-4 or accept the recommendation" ;;
+  esac
+
+  slug="$(printf '%s' "$what" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | cut -c1-40)"
+  slug="${slug#-}"; slug="${slug%-}"
+  [ -n "$slug" ] || slug="incident"
+
+  if [ "$layer" = "hook" ]; then
+    gpath="$SCAR_DIR/hooks/$slug.sh"
+    [ -e "$gpath" ] && gpath="$SCAR_DIR/hooks/$slug-$TODAY.sh"
+    {
+      printf 'Hook template:\n'
+      printf '  1) push-guard (remote-ahead check)\n'
+      printf '  2) confirm-destructive (approval token for irreversible commands)\n'
+      printf '  3) blank skeleton\n'
+    } >&2
+    prompt "Template [1-3] (default 2): "
+    read -r hnum || hnum=""
+    case "${hnum:-2}" in
+      1) write_push_guard "$gpath" ;;
+      3) write_blank_hook "$gpath" ;;
+      *) write_confirm_destructive "$gpath" ;;
+    esac
+    chmod +x "$gpath"
+    printf '\n# born from incident: %s · %s · %s\n' "$TODAY" "$type" "$sev" >> "$gpath"
+  else
+    gpath="$SCAR_DIR/rules/$slug.md"
+    [ -e "$gpath" ] && gpath="$SCAR_DIR/rules/$slug-$TODAY.md"
+    write_rule_skeleton "$gpath"
+    printf '\n<!-- born from incident: %s · %s · %s · intended layer: %s -->\n' \
+      "$TODAY" "$type" "$sev" "$layer" >> "$gpath"
+  fi
+
+  # newest first: header stays on top, new entry goes above older entries
+  tmp="$LOG_FILE.tmp.$$"
+  {
+    awk '/^## /{exit} /^$/{b++; next} {for (; b > 0; b--) print ""; print}' "$LOG_FILE"
+    printf '\n## %s · %s · %s\n' "$TODAY" "$type" "$sev"
+    printf '**What happened:** %s\n' "$what"
+    printf '**Root cause:** %s\n' "$root"
+    printf '**Guardrail:** %s (%s layer)\n' "$gpath" "$layer"
+    printf '**Status:** open · last-reviewed: %s\n' "$TODAY"
+    awk 'f { print } /^## / { if (!f) { f = 1; print ""; print } }' "$LOG_FILE"
+  } > "$tmp" && mv "$tmp" "$LOG_FILE"
+
+  say "logged: $TODAY · $type · $sev"
+  say "guardrail skeleton: $gpath"
+  say "next: make the guardrail real, wire it in, then flip Status to shipped."
+}
+
+cmd_log() {
+  [ -f "$LOG_FILE" ] || die "no $LOG_FILE — run 'agentscar init' first"
+  ftype=""
+  fsev=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --type)     [ $# -ge 2 ] || die "--type needs a value";     ftype="$2"; shift 2 ;;
+      --severity) [ $# -ge 2 ] || die "--severity needs a value"; fsev="$2";  shift 2 ;;
+      *) die "unknown option: $1 (see 'agentscar help')" ;;
+    esac
+  done
+  if [ -z "$ftype" ] && [ -z "$fsev" ]; then
+    cat "$LOG_FILE"
+    return 0
+  fi
+  awk -v t="$ftype" -v s="$fsev" '
+    BEGIN { show = 0 }
+    /^## / {
+      show = 1
+      if (t != "" && index($0, " " t " ") == 0) show = 0
+      if (s != "" && index($0, " " s)     == 0) show = 0
+    }
+    show { print }
+  ' "$LOG_FILE"
+}
+
+case "${1:-help}" in
+  init)                 shift; cmd_init "$@" ;;
+  new)                  cmd_new ;;
+  log)                  shift; cmd_log "$@" ;;
+  -h|--help|help)       usage ;;
+  -v|--version|version) say "agentscar $VERSION" ;;
+  *)                    die "unknown command: $1 (see 'agentscar help')" ;;
+esac

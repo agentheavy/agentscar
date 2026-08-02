@@ -1,0 +1,2 @@
+# Functional files, not knowledge concepts — excluded from OKF linting.
+templates/*
