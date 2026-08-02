@@ -1,0 +1,33 @@
+{
+  "name": "agentscar",
+  "version": "0.1.0",
+  "description": "Blameless postmortems for your coding agent. Auto-memory remembers — it doesn't learn.",
+  "bin": {
+    "agentscar": "./bin/agentscar"
+  },
+  "files": [
+    "bin/",
+    "templates/",
+    "adapters/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agentheavy/agentscar.git"
+  },
+  "homepage": "https://github.com/agentheavy/agentscar#readme",
+  "bugs": {
+    "url": "https://github.com/agentheavy/agentscar/issues"
+  },
+  "keywords": [
+    "postmortem",
+    "coding-agent",
+    "ai-agents",
+    "guardrails",
+    "claude-code",
+    "cli"
+  ]
+}

@@ -44,6 +44,8 @@ agentscar doesn't replace any of these — it's the loop that decides *what goes
 ## Quickstart
 
 ```bash
+npm i -g agentscar   # or: pipx install agentscar (or: uv tool install agentscar)
+# or from source:
 git clone https://github.com/agentheavy/agentscar && cd agentscar && ./install.sh   # or: copy agentscar to PATH
 cd your-project
 agentscar init
