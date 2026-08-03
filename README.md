@@ -53,6 +53,8 @@ agentscar init
 agentscar new
 ```
 
+**Windows:** agentscar is a bash script — run it from Git Bash (ships with Git for Windows, which Claude Code already requires) and keep bash on PATH. The npm and pipx installs add shims, but the shims still call bash — if you hit `bash: command not found`, switch to Git Bash.
+
 `agentscar new` walks you through the postmortem and drops:
 - an entry in `.agentscar/log.md`
 - a guardrail skeleton in `.agentscar/rules/`, with the intended enforcement layer (rule, hook, or test) noted inside
