@@ -10,11 +10,11 @@ agentscar new    # guided postmortem → routed guardrail + log entry
 agentscar log    # your agent's scar tissue, greppable
 ```
 
-Bash + markdown. Zero dependencies. Works with any agent CLI — Claude Code, Codex, OpenCode — it doesn't care.
+Bash + markdown. Zero dependencies. Works with any agent CLI — Claude Code, Codex, OpenCode.
 
 ## Why
 
-Every practitioner running coding agents daily knows the loop: the agent pushes over CI's commits, you add a rule, and three weeks later it happens again — because the rule was prose, buried deep in context, losing the attention war against file dumps and test output.
+Every practitioner running coding agents daily knows the loop: the agent pushes over the commits your CI bot just made, you add a rule, and three weeks later it happens again — because the rule was prose, buried deep in context, losing the attention war against file dumps and test output.
 
 Notes don't change behavior. **Enforcement does.** A small pre-push hook outperforms any instruction about pushing, because hooks run on `exit 1` and instructions run on attention.
 
@@ -81,8 +81,8 @@ These aren't examples — they're the hooks I actually run, each born from a rea
 
 ## FAQ
 
-**Isn't this just "write better CLAUDE.md"?**
-No. Prose competes for attention; attention degrades with context length. agentscar's point is routing: most lessons people write as rules wanted to be hooks.
+**Can't I just put these rules in CLAUDE.md / AGENTS.md?**
+You can — but prose competes for attention, and attention degrades with context length. agentscar's point is routing: most lessons people write as rules wanted to be hooks.
 
 **Does it phone home / need an API key?**
 No. It's bash and markdown files in your repo. Nothing leaves your machine.
