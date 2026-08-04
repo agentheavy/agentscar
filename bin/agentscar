@@ -43,13 +43,14 @@ FAILURE TYPES   (every incident we've logged collapses into one of six)
   spec-drift          built X-prime when you asked for X
   context-loss        a past decision quietly reversed
 
-GUARDRAIL LAYERS   (each lesson is routed to the strongest layer that fits)
+GUARDRAIL LAYERS   (listed strongest first)
   1=hook   blocks automatically — use when a script can detect the violation
   2=rule   written instruction — when it takes judgment, not a check
   3=skill  step-by-step procedure — when it is a flow, not a ban
   4=test   regression test — when code correctness is the issue
-  Lower number = stronger: hooks run on exit codes, prose runs on attention.
-  When two layers fit, pick the smaller number. Same numbering in 'new'.
+
+  Prefer the strongest layer that fits: a hook beats a rule because it runs
+  on exit codes, not attention. The 'new' interview uses this same 1-4 menu.
 EOF
 }
 
