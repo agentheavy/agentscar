@@ -14,7 +14,7 @@ Bash + markdown. Zero dependencies. Works with any agent CLI — Claude Code, Co
 
 ## Why
 
-Every practitioner running coding agents daily knows the loop: the agent force-pushes over the commits your CI bot just made, you add a rule, and three weeks later it happens again — because the rule was prose, buried deep in context, losing the attention war against file dumps and test output.
+Every practitioner running coding agents daily knows the loop: the agent hits a rejected `git push`, "fixes" it with `--force`, and wipes commits it never saw; you add a rule, and three weeks later it happens again — because the rule was prose, buried deep in context, losing the attention war against file dumps and test output.
 
 Notes don't change behavior. **Enforcement does.** A small pre-push hook outperforms any instruction about pushing, because hooks run on `exit 1` and instructions run on attention.
 
