@@ -3,7 +3,9 @@
 - `agentscar lint`: rules without `last-reviewed` or older than 90 days -> warn; contradiction detect between rules
 - non-interactive `agentscar new` (flags / stdin JSON) for CI and agent use; end state:
   the Claude skill calls the CLI instead of re-implementing the interview in prose
-  (consistency — owner leans yes, 04.08; arch-review candidate #2)
+  (consistency — owner leans yes, 04.08; arch-review candidate #2; 04.08 competitive
+  sweep: assistant postmortem prompts already exist and stop at the document — the
+  interview half is commoditizable, so the CLI-backed loop is the compounding part)
 - layer multiselect in `new`: one incident, guardrails on two layers (e.g. rule + test);
   owner keeps coming back to this (04.08)
 - auto-wiring hooks into `.git/hooks/` / agent-CLI hook dirs (v0: manual, instructions in each hook header)
