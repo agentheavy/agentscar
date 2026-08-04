@@ -9,6 +9,7 @@ VERSION="0.1.0"
 SCAR_DIR=".agentscar"
 LOG_FILE="$SCAR_DIR/log.md"
 TODAY="$(date +%Y-%m-%d)"
+AGENTS_MARKER='## agentscar — incident postmortems'
 
 die() { printf 'agentscar: %s\n' "$*" >&2; exit 1; }
 say() { printf '%s\n' "$*"; }
@@ -22,10 +23,10 @@ Agent-agnostic: everything it writes is plain markdown in your repo.
 Claude Code, Codex, OpenCode — any agent that reads files can use it.
 
 USAGE
-  agentscar init [--claude] [--agents-md]
+  agentscar init [--claude] [--agentsmd]
                               set up .agentscar/ in the current directory
                               (--claude installs the Claude Code skill;
-                              --agents-md creates/updates AGENTS.md — the two
+                              --agentsmd creates/updates AGENTS.md — the two
                               adapters in adapters/)
   agentscar new               interview about the last incident: what happened
                               -> whys to root cause -> failure type + severity
@@ -42,9 +43,13 @@ FAILURE TYPES   (every incident we've logged collapses into one of six)
   spec-drift          built X-prime when you asked for X
   context-loss        a past decision quietly reversed
 
-ROUTING RULE   (where a guardrail should live)
-  hook (deterministic block) > rule (instruction) > skill (procedure)
-  > test (regression) — pick the strongest layer that fits.
+GUARDRAIL LAYERS   (each lesson is routed to the strongest layer that fits)
+  1=hook   blocks automatically — use when a script can detect the violation
+  2=rule   written instruction — when it takes judgment, not a check
+  3=skill  step-by-step procedure — when it is a flow, not a ban
+  4=test   regression test — when code correctness is the issue
+  Lower number = stronger: hooks run on exit codes, prose runs on attention.
+  When two layers fit, pick the smaller number. Same numbering in 'new'.
 EOF
 }
 
@@ -159,9 +164,12 @@ Log entry format (verbatim):
 EOF
 }
 
-write_agents_section() {
-  cat >> "$1" <<'EOF'
-## agentscar — incident postmortems
+append_agents_section() {
+  if [ -s "$1" ]; then
+    [ -n "$(tail -c 1 "$1")" ] && printf '\n' >> "$1"  # repair missing trailing newline
+    printf '\n' >> "$1"
+  fi
+  printf '%s\n' "$AGENTS_MARKER" >> "$1" && cat >> "$1" <<'EOF'
 
 This repo logs agent incidents with agentscar (blameless postmortems -> enforced
 guardrails). After any incident — false "done", destructive command, silently
@@ -179,7 +187,8 @@ cmd_init() {
   for arg in "$@"; do
     case "$arg" in
       --claude) claude_flag="yes" ;;
-      --agents-md|--agentsmd) agents_flag="yes" ;;
+      --agentsmd|--agents-md) agents_flag="yes" ;;
+      *) die "unknown option: $arg (see 'agentscar help')" ;;
     esac
   done
 
@@ -205,6 +214,7 @@ EOF
     say "$LOG_FILE already exists — left untouched"
   fi
 
+  index_verb="created"; [ -f "$SCAR_DIR/index.md" ] && index_verb="refreshed"
   cat > "$SCAR_DIR/index.md" <<'EOF'
 ---
 okf_version: "0.2"
@@ -213,7 +223,7 @@ type: index
 
 Blameless-postmortem bundle: incident log in `log.md` (newest first), guardrail rules in `rules/`, hooks in `hooks/`.
 EOF
-  say "created $SCAR_DIR/index.md"
+  say "$index_verb $SCAR_DIR/index.md"
 
   write_push_guard          "$SCAR_DIR/templates/hook-push-guard.sh"
   write_confirm_destructive "$SCAR_DIR/templates/hook-confirm-destructive.sh"
@@ -222,26 +232,23 @@ EOF
   say "templates ready in $SCAR_DIR/templates/"
 
   if [ -d ".claude" ] || [ "$claude_flag" = "yes" ]; then
+    skill_verb="installed"; [ -f .claude/skills/agentscar/SKILL.md ] && skill_verb="refreshed"
     mkdir -p .claude/skills/agentscar
     write_skill .claude/skills/agentscar/SKILL.md
-    say "Claude Code skill installed: .claude/skills/agentscar/SKILL.md"
+    say "Claude Code skill $skill_verb: .claude/skills/agentscar/SKILL.md"
   else
     say "hint: run 'agentscar init --claude' to also install the Claude Code skill"
   fi
 
   if [ -f AGENTS.md ]; then
-    if grep -q '^## agentscar — incident postmortems' AGENTS.md; then
+    if grep -q "^$AGENTS_MARKER" AGENTS.md; then
       say "AGENTS.md already has an agentscar section — left untouched"
     else
-      if [ -s AGENTS.md ]; then
-        [ -n "$(tail -c 1 AGENTS.md)" ] && printf '\n' >> AGENTS.md  # repair missing trailing newline
-        printf '\n' >> AGENTS.md
-      fi
-      write_agents_section AGENTS.md || die "cannot write AGENTS.md"
+      append_agents_section AGENTS.md || die "cannot write AGENTS.md"
       say "agentscar section added to AGENTS.md"
     fi
   elif [ "$agents_flag" = "yes" ]; then
-    write_agents_section AGENTS.md || die "cannot write AGENTS.md"
+    append_agents_section AGENTS.md || die "cannot write AGENTS.md"
     say "created AGENTS.md"
   fi
 }
@@ -290,7 +297,7 @@ cmd_new() {
   esac
 
   case "$rec" in
-    hook) recnum=1 ;; rule) recnum=2 ;; skill) recnum=3 ;; *) recnum=4 ;;
+    hook) recnum=1 ;; rule) recnum=2 ;; *) recnum=4 ;;
   esac
   {
     printf 'Guardrail layer — where enforcement lives, strongest first:\n'
@@ -302,12 +309,11 @@ cmd_new() {
   } >&2
   prompt "Layer [1-4] (Enter = $recnum): "
   read -r lnum || lnum=""
-  case "${lnum:-}" in
+  case "${lnum:-$recnum}" in
     1) layer="hook" ;;
     2) layer="rule" ;;
     3) layer="skill" ;;
     4) layer="test" ;;
-    "") layer="$rec" ;;
     *) die "pick 1-4 or accept the recommendation" ;;
   esac
 
@@ -315,16 +321,18 @@ cmd_new() {
   slug="${slug#-}"; slug="${slug%-}"
   [ -n "$slug" ] || slug="incident"
 
+  if [ "$layer" = "hook" ]; then dir="$SCAR_DIR/hooks"; ext="sh"; else dir="$SCAR_DIR/rules"; ext="md"; fi
+  gpath="$dir/$slug.$ext"
+  if [ -e "$gpath" ]; then
+    gpath="$dir/$slug-$TODAY.$ext"
+    n=2
+    while [ -e "$gpath" ]; do
+      gpath="$dir/$slug-$TODAY-$n.$ext"
+      n=$((n + 1))
+    done
+  fi
+
   if [ "$layer" = "hook" ]; then
-    gpath="$SCAR_DIR/hooks/$slug.sh"
-    if [ -e "$gpath" ]; then
-      gpath="$SCAR_DIR/hooks/$slug-$TODAY.sh"
-      n=2
-      while [ -e "$gpath" ]; do
-        gpath="$SCAR_DIR/hooks/$slug-$TODAY-$n.sh"
-        n=$((n + 1))
-      done
-    fi
     {
       printf 'Hook template:\n'
       printf '  1) push-guard (remote-ahead check)\n'
@@ -341,15 +349,6 @@ cmd_new() {
     chmod +x "$gpath"
     printf '\n# born from incident: %s · %s · %s\n' "$TODAY" "$type" "$sev" >> "$gpath"
   else
-    gpath="$SCAR_DIR/rules/$slug.md"
-    if [ -e "$gpath" ]; then
-      gpath="$SCAR_DIR/rules/$slug-$TODAY.md"
-      n=2
-      while [ -e "$gpath" ]; do
-        gpath="$SCAR_DIR/rules/$slug-$TODAY-$n.md"
-        n=$((n + 1))
-      done
-    fi
     write_rule_skeleton "$gpath"
     printf '\n<!-- born from incident: %s · %s · %s · intended layer: %s -->\n' \
       "$TODAY" "$type" "$sev" "$layer" >> "$gpath"
