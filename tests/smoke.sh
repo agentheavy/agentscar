@@ -32,11 +32,11 @@ out="$("$BIN" init 2>&1)"
 [ ! -f AGENTS.md ] && ! printf '%s\n' "$out" | grep -q 'AGENTS.md'
 check 1 "plain init leaves AGENTS.md absent and unmentioned" $?
 
-# t2: init --agents, no AGENTS.md -> created with the section
+# t2: init --agents-md, no AGENTS.md -> created with the section
 fresh
-"$BIN" init --agents >/dev/null
+"$BIN" init --agents-md >/dev/null
 [ -f AGENTS.md ] && grep -q '^## agentscar' AGENTS.md
-check 2 "init --agents creates AGENTS.md with the section" $?
+check 2 "init --agents-md creates AGENTS.md with the section" $?
 
 # t3: existing AGENTS.md with trailing newline -> preserved + section appended once
 fresh
@@ -55,21 +55,21 @@ check 4 "no trailing newline in prior file, section not glued" $?
 
 # t5: double run -> section exactly once
 fresh
-"$BIN" init --agents >/dev/null
+"$BIN" init --agents-md >/dev/null
 "$BIN" init >/dev/null
-"$BIN" init --agents >/dev/null
+"$BIN" init --agents-md >/dev/null
 [ "$(grep -c '^## agentscar' AGENTS.md)" -eq 1 ]
 check 5 "repeated init keeps exactly one section" $?
 
-# t6: --claude --agents together -> both adapters installed
+# t6: --claude + alias --agentsmd together -> both adapters installed
 fresh
-"$BIN" init --claude --agents >/dev/null
+"$BIN" init --claude --agentsmd >/dev/null
 [ -f .claude/skills/agentscar/SKILL.md ] && grep -q '^## agentscar' AGENTS.md
-check 6 "--claude --agents installs skill and AGENTS.md section" $?
+check 6 "--claude --agentsmd (alias) installs skill and AGENTS.md section" $?
 
 # t7: syntax check + embedded heredoc matches canonical SECTION.md byte-for-byte
 fresh
-bash -n "$BIN" && "$BIN" init --agents >/dev/null \
+bash -n "$BIN" && "$BIN" init --agents-md >/dev/null \
   && diff "$ROOT/adapters/agents-md/SECTION.md" AGENTS.md >/dev/null
 check 7 "bash -n passes and heredoc matches adapters/agents-md/SECTION.md" $?
 
@@ -84,10 +84,10 @@ newin | "$BIN" new >/dev/null 2>&1
 [ "$(ls .agentscar/hooks/same-incident-text* 2>/dev/null | wc -l)" -eq 3 ]
 check 8 "three same-slug hook incidents produce three files" $?
 
-# t9: AGENTS.md unwritable (is a directory) -> init --agents dies, no false success
+# t9: AGENTS.md unwritable (is a directory) -> init --agents-md dies, no false success
 fresh
 mkdir AGENTS.md
-out="$("$BIN" init --agents 2>&1)"; rc=$?
+out="$("$BIN" init --agents-md 2>&1)"; rc=$?
 [ "$rc" -ne 0 ] && ! printf '%s\n' "$out" | grep -q 'created AGENTS.md'
 check 9 "unwritable AGENTS.md target dies instead of false success" $?
 

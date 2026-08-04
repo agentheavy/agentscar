@@ -22,10 +22,10 @@ Agent-agnostic: everything it writes is plain markdown in your repo.
 Claude Code, Codex, OpenCode — any agent that reads files can use it.
 
 USAGE
-  agentscar init [--claude] [--agents]
+  agentscar init [--claude] [--agents-md]
                               set up .agentscar/ in the current directory
                               (--claude installs the Claude Code skill;
-                              --agents creates/updates AGENTS.md — the two
+                              --agents-md creates/updates AGENTS.md — the two
                               adapters in adapters/)
   agentscar new               interview about the last incident: what happened
                               -> whys to root cause -> failure type + severity
@@ -179,7 +179,7 @@ cmd_init() {
   for arg in "$@"; do
     case "$arg" in
       --claude) claude_flag="yes" ;;
-      --agents) agents_flag="yes" ;;
+      --agents-md|--agentsmd) agents_flag="yes" ;;
     esac
   done
 
