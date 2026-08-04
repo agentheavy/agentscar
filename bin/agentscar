@@ -18,15 +18,21 @@ usage() {
   cat <<'EOF'
 agentscar — blameless postmortems for your coding agent
 
+Agent-agnostic: everything it writes is plain markdown in your repo.
+Claude Code, Codex, OpenCode — any agent that reads files can use it.
+
 USAGE
   agentscar init [--claude]   set up .agentscar/ in the current directory
-                              (--claude also installs the Claude Code skill)
-  agentscar new               guided postmortem -> log entry + guardrail skeleton
+                              (--claude also installs the Claude Code skill,
+                              the first adapter in adapters/)
+  agentscar new               interview about the last incident: what happened
+                              -> whys to root cause -> failure type + severity
+                              -> writes a log entry + a guardrail skeleton
   agentscar log [--type T] [--severity S]
                               show the log; filter by failure type / severity
   agentscar help | version
 
-FAILURE TYPES
+FAILURE TYPES   (every incident we've logged collapses into one of six)
   wrong-assumption    agent silently resolved an ambiguity and ran with it
   destructive-action  irreversible command without human approval
   verification-skip   claimed "done/works" without evidence
@@ -34,8 +40,9 @@ FAILURE TYPES
   spec-drift          built X-prime when you asked for X
   context-loss        a past decision quietly reversed
 
-ROUTING RULE
-  hook > rule > skill > test — the strongest enforcement layer that fits.
+ROUTING RULE   (where a guardrail should live)
+  hook (deterministic block) > rule (instruction) > skill (procedure)
+  > test (regression) — pick the strongest layer that fits.
 EOF
 }
 
