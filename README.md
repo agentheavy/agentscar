@@ -14,7 +14,7 @@ Bash + markdown. Zero dependencies. Works with any agent CLI — Claude Code, Co
 
 ## Why
 
-Every practitioner running coding agents daily knows the loop: the agent pushes over the commits your CI bot just made, you add a rule, and three weeks later it happens again — because the rule was prose, buried deep in context, losing the attention war against file dumps and test output.
+Every practitioner running coding agents daily knows the loop: the agent force-pushes over the commits your CI bot just made, you add a rule, and three weeks later it happens again — because the rule was prose, buried deep in context, losing the attention war against file dumps and test output.
 
 Notes don't change behavior. **Enforcement does.** A small pre-push hook outperforms any instruction about pushing, because hooks run on `exit 1` and instructions run on attention.
 
@@ -28,7 +28,7 @@ agentscar is the discipline SRE teams use for outages, applied to agents:
 
 4. **Log entry** — dated, typed, linked to the guardrail it produced.
 
-If a lesson matters, it wants to become a hook.
+If a lesson matters, it wants the strongest layer that fits — and that's a hook more often than you think.
 
 ## vs. what you already have
 

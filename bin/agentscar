@@ -369,7 +369,15 @@ cmd_new() {
 
   say "logged: $TODAY · $type · $sev"
   say "guardrail skeleton: $gpath"
-  say "next: make the guardrail real, wire it in, then flip Status to shipped."
+  if [ "$layer" = "hook" ]; then
+    say "next: make it real, then wire it in — git flows: cp into .git/hooks/ (e.g. pre-push);"
+    say "agent CLIs: register it as a pre-tool hook. Exact options are in the file header."
+    say "Once wired, flip Status to shipped."
+  else
+    say "next: make it real, then wire it where its layer lives — rule: reference it from"
+    say "your agent's rules file (CLAUDE.md / AGENTS.md); test: move it into your test suite."
+    say "Once wired, flip Status to shipped."
+  fi
 }
 
 cmd_log() {
