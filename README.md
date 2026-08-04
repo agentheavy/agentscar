@@ -63,6 +63,8 @@ Everything agentscar writes is plain markdown; the minimal frontmatter it carrie
 
 **Claude Code users:** `agentscar init --claude` (or plain `init` in a repo that already has `.claude/`) also installs a skill so the agent runs the postmortem flow itself after an incident and proposes the guardrail as a diff — you approve, it lands.
 
+**Other agents (Codex, Cursor, …):** `agentscar init --agents` adds an agentscar section to `AGENTS.md` (created if missing; plain `init` also updates an existing one), pointing anything that reads the file at the postmortem flow.
+
 ## The six ways agents fail
 
 Every lesson I've distilled from real agent incidents — 80+ files across two production workspaces, a domain knowledge vault, and a user-level harness — collapses into six types: **wrong-assumption · destructive-action · verification-skip · instruction-drift · spec-drift · context-loss.**
