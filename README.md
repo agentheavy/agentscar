@@ -98,3 +98,7 @@ Scar tissue is permanent memory of damage — grown so the same wound doesn't op
 ## License
 
 MIT.
+
+---
+
+agentscar is one discipline of a larger verification loop — the rest lives at [agentheavy.dev](https://agentheavy.dev), field notes at [agentheavy.substack.com](https://agentheavy.substack.com).
