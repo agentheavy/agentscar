@@ -1,5 +1,7 @@
 # agentscar
 
+![enforcement > prose — postmortems for AI coding agents, routed into hooks, rules, tests](https://raw.githubusercontent.com/agentheavy/agentscar/main/.github/banner.png)
+
 **Your coding agent makes the same mistake twice. agentscar makes it the last time.**
 
 Auto-memory remembers. It doesn't *learn*. agentscar runs a blameless postmortem on every agent incident — root-causes it, then writes the guardrail (a hook, a rule, or a skill) so the same failure physically can't happen again.
