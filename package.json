@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Blameless postmortems for your coding agent. Auto-memory remembers — it doesn't learn.",
   "bin": {
-    "agentscar": "./bin/agentscar"
+    "agentscar": "bin/agentscar"
   },
   "files": [
     "bin/",
