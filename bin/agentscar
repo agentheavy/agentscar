@@ -25,9 +25,10 @@ Claude Code, Codex, OpenCode — any agent that reads files can use it.
 USAGE
   agentscar init [--claude] [--agentsmd]
                               set up .agentscar/ in the current directory
-                              (--claude installs the Claude Code skill;
-                              --agentsmd creates/updates AGENTS.md — the two
-                              adapters in adapters/)
+                              (--claude installs the Claude Code skill —
+                              canonical copy in skills/agentscar/;
+                              --agentsmd creates/updates AGENTS.md from
+                              adapters/agents-md/)
   agentscar new               interview about the last incident: what happened
                               -> whys to root cause -> failure type + severity
                               -> writes a log entry + a guardrail skeleton

@@ -9,6 +9,7 @@
     "bin/",
     "templates/",
     "adapters/",
+    "skills/",
     "docs/",
     "README.md",
     "LICENSE"

@@ -67,6 +67,8 @@ Everything agentscar writes is plain markdown; the minimal frontmatter it carrie
 
 **Other agents (Codex, Cursor, …):** `agentscar init --agentsmd` adds an agentscar section to `AGENTS.md` (created if missing; plain `init` also updates an existing one), pointing anything that reads the file at the postmortem flow.
 
+**Skill without installing the CLI:** `npx skills add agentheavy/agentscar` (via [skills.sh](https://skills.sh)) drops the postmortem skill straight into Claude Code, Cursor, Codex and other agents — no `agentscar` install needed. Run `agentscar init` once when the skill needs a log to write incidents to.
+
 ## The six ways agents fail
 
 Every lesson I've distilled from real agent incidents — 80+ files across two production workspaces, a domain knowledge vault, and a user-level harness — collapses into six types: **wrong-assumption · destructive-action · verification-skip · instruction-drift · spec-drift · context-loss.**
