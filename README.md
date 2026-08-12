@@ -81,7 +81,7 @@ Each type has exactly one guardrail shape that kills it. Full breakdown: [docs/f
 - `hook-confirm-destructive` — force-push / `rm -rf` / hard reset require explicit human approval.
 - `rule-skeleton` — constraint / why (incident link) / how-to-apply / last-reviewed.
 
-These aren't examples — they're the hooks I actually run, each born from a real incident.
+A CI bot's commits outran my local branch, and remembering to check wasn't enough — that's where push-guard came from. I run a version of it against my own agent. The other two I don't run; they're starting points.
 
 ## FAQ
 
