@@ -114,4 +114,28 @@ printf '%s\n' "$out" | grep -q 'refreshed .agentscar/index.md' \
   && ! printf '%s\n' "$out" | grep -q 'created .agentscar/index.md'
 check 12 "re-init says refreshed for index.md and the skill" $?
 
+# t13: --severity accepts the 1/2/3 vocabulary the 'new' interview asks for,
+# instead of silently printing an empty log (which reads as "no such incidents").
+fresh
+"$BIN" init >/dev/null
+printf 'high sev incident\nbecause reasons\n\n1\n3\n2\n' | "$BIN" new >/dev/null 2>&1
+"$BIN" log --severity 3 2>/dev/null | grep -q 'high sev incident'
+check 13 "numeric --severity matches the same entries as the word" $?
+
+# t14: misspelled --type must die, not return a silent empty result
+fresh
+"$BIN" init >/dev/null
+printf 'some incident\nbecause reasons\n\n1\n2\n2\n' | "$BIN" new >/dev/null 2>&1
+out="$("$BIN" log --type verification-skipped 2>&1)"; rc=$?
+[ "$rc" -ne 0 ] && printf '%s\n' "$out" | grep -q 'unknown failure type'
+check 14 "misspelled --type dies instead of printing an empty log" $?
+
+# t15: unknown severity value must die, not return a silent empty result
+fresh
+"$BIN" init >/dev/null
+printf 'some incident\nbecause reasons\n\n1\n2\n2\n' | "$BIN" new >/dev/null 2>&1
+out="$("$BIN" log --severity critical 2>&1)"; rc=$?
+[ "$rc" -ne 0 ] && printf '%s\n' "$out" | grep -q 'unknown severity'
+check 15 "unknown --severity dies instead of printing an empty log" $?
+
 exit "$fails"
