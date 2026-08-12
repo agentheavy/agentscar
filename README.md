@@ -4,7 +4,7 @@
 
 **Your coding agent makes the same mistake twice. agentscar makes it the last time.**
 
-Auto-memory remembers. It doesn't *learn*. agentscar runs a blameless postmortem on every agent incident — root-causes it, then writes the guardrail (a hook, a rule, or a skill) so the same failure physically can't happen again.
+Auto-memory remembers. It doesn't *learn*. agentscar runs a blameless postmortem on every agent incident — root-causes it, then writes the guardrail (a hook, a rule, or a skill) at the point where the failure happens, not in a file the agent has to remember.
 
 ```bash
 agentscar init   # sets up .agentscar/ — log, guardrail templates
@@ -18,7 +18,7 @@ Bash + markdown. Zero dependencies. Works with any agent CLI — Claude Code, Co
 
 Every practitioner running coding agents daily knows the loop: the agent hits a rejected `git push`, "fixes" it with `--force`, and wipes commits it never saw; you add a rule, and three weeks later it happens again — because the rule was prose, buried deep in context, losing the attention war against file dumps and test output.
 
-Notes don't change behavior. **Enforcement does.** A small pre-push hook outperforms any instruction about pushing, because hooks run on `exit 1` and instructions run on attention.
+Notes don't change behavior. **Enforcement does.** A guard that runs before the push beats any instruction about pushing: the guard can exit 1, the instruction can only ask.
 
 agentscar is the discipline SRE teams use for outages, applied to agents:
 
@@ -71,7 +71,7 @@ Everything agentscar writes is plain markdown; the minimal frontmatter it carrie
 
 ## The six ways agents fail
 
-Every lesson I've distilled from real agent incidents — 80+ files across two production workspaces, a domain knowledge vault, and a user-level harness — collapses into six types: **wrong-assumption · destructive-action · verification-skip · instruction-drift · spec-drift · context-loss.**
+Every lesson I've distilled from real agent incidents collapses into six types: **wrong-assumption · destructive-action · verification-skip · instruction-drift · spec-drift · context-loss.**
 
 Each type has exactly one guardrail shape that kills it. Full breakdown: [docs/failure-types.md](docs/failure-types.md).
 

@@ -1,6 +1,6 @@
 # The six ways coding agents fail
 
-Taxonomy from blameless postmortems distilled into 80+ lesson files across two production workspaces, a domain knowledge vault, and a user-level harness. Every incident behind them fits one of these. Each type has one guardrail shape that actually kills it — and several that only feel like they do.
+Taxonomy distilled from blameless postmortems on real agent incidents. Every incident behind it fits one of these six. Each type has one guardrail shape that actually kills it — and several that only feel like they do.
 
 ## 1. wrong-assumption
 
