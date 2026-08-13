@@ -1,6 +1,6 @@
 {
   "name": "agentscar",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Blameless postmortems for your coding agent. Auto-memory remembers — it doesn't learn.",
   "bin": {
     "agentscar": "bin/agentscar"
