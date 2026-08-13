@@ -2,8 +2,6 @@
 generated: {by: claude-code/opus, at: 2026-07-12}
 type: postmortem
 status: stable
-verified:
-  - {by: human:operator, at: 2026-07-12}
 applies_to: process
 generalize: no
 ---
