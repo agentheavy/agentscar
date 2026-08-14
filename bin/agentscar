@@ -19,8 +19,8 @@ usage() {
   cat <<'EOF'
 agentscar — blameless postmortems for your coding agent
 
-Agent-agnostic: everything it writes is plain markdown in your repo.
-Claude Code, Codex, OpenCode — any agent that reads files can use it.
+Everything it writes is plain markdown in your repo.
+Adapters for Claude Code and AGENTS.md; other CLIs untested.
 
 USAGE
   agentscar init [--claude] [--agentsmd]
