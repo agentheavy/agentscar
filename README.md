@@ -12,7 +12,7 @@ agentscar new    # guided postmortem → routed guardrail + log entry
 agentscar log    # your agent's scar tissue, greppable
 ```
 
-Bash + markdown. Zero dependencies. Works with any agent CLI — Claude Code, Codex, OpenCode.
+Bash + markdown. Zero dependencies. Adapters for Claude Code and `AGENTS.md`; the rest is plain markdown. I haven't tested it against other CLIs.
 
 ## Why
 
