@@ -18,4 +18,7 @@
 - `init` re-run: guard user-customized templates from silent overwrite (v0 overwrites everything except log.md)
 - `init` emits `.agentscar/.okfignore` so fresh bundles lint without orphan INFO noise
 
+- non-interactive `new` (dogfood 14.08: the interview reads stdin, so the primary user — an agent in a harness — cannot drive it; the skill covers the flow, but the CLI itself should take flags or a heredoc)
+- `init --claude --user`: install the skill user-level, not only per-repo (dogfood 14.08: the skill sat uninstalled for 9 days because init only writes ./.claude/skills/)
+
 Every "what if we also..." lands here, not in scope.
