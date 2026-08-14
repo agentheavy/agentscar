@@ -69,11 +69,11 @@ Everything agentscar writes is plain markdown; the minimal frontmatter it carrie
 
 **Skill without installing the CLI:** `npx skills add agentheavy/agentscar` (via [skills.sh](https://skills.sh)) drops the postmortem skill straight into Claude Code, Cursor, Codex and other agents — no `agentscar` install needed. Run `agentscar init` once when the skill needs a log to write incidents to.
 
-## The six ways agents fail
+## Six failure types
 
-Every lesson I've distilled from real agent incidents collapses into six types: **wrong-assumption · destructive-action · verification-skip · instruction-drift · spec-drift · context-loss.**
+Six types cover everything I have hit so far: **wrong-assumption · destructive-action · verification-skip · instruction-drift · spec-drift · context-loss.**
 
-Each type has exactly one guardrail shape that kills it. Full breakdown: [docs/failure-types.md](docs/failure-types.md).
+Each type has a guardrail shape that holds it better than the others do. Full breakdown: [docs/failure-types.md](docs/failure-types.md).
 
 ## Included templates
 

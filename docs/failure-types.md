@@ -1,6 +1,6 @@
 # The six ways coding agents fail
 
-Taxonomy distilled from blameless postmortems on real agent incidents. Every incident behind it fits one of these six. Each type has one guardrail shape that actually kills it — and several that only feel like they do.
+Built from blameless postmortems on agent incidents. Everything I have hit so far fits one of these six.
 
 ## 1. wrong-assumption
 
@@ -46,9 +46,9 @@ Taxonomy distilled from blameless postmortems on real agent incidents. Every inc
 
 ## The meta-pattern
 
-The distribution of *incidents* and the distribution of *fix value* don't match. Types 1 and 4 are the most frequent; a handful of type-2 hooks deliver the most value — because hooks are the only layer whose enforcement doesn't degrade as context grows.
+A rule only works if the agent reads it. A hook runs before the command, whether anything was read or not.
 
-Rank enforcement, then route: **hook → rule → skill → test.** The strongest layer that fits, every time.
+Pick the strongest layer that fits: **hook → rule → skill → test.**
 
 ---
 *Built from real incidents. Got a failure type that doesn't fit these six? Open an issue — I collect them.*
