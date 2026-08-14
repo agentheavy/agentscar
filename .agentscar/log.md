@@ -18,13 +18,6 @@ a guardrail is not written without an incident. Newest first.
 **Status:** shipped · last-reviewed: 2026-07-31
 **Postmortem:** [2026-07-31-winget-cli-path-non-interactive-bash](postmortems/2026-07-31-winget-cli-path-non-interactive-bash.md)
 
-## 2026-07-13 · destructive-action · high
-**What happened:** A controller deleted a stalled background agent's "orphaned" files that were in fact the finished work sitting in the worktree — twice in one day a dead-looking agent had already produced its deliverable.
-**Root cause:** treated "agent stalled" as "work lost" -> recovery decided from agent status alone -> never diffed the workspace against the expected deliverable before cleaning up.
-**Guardrail:** inspect-tree-before-recovery rule: `git status` + `git log` against the expected deliverable before any re-dispatch or cleanup (rule layer)
-**Status:** shipped · last-reviewed: 2026-07-13
-**Postmortem:** [2026-07-13-stalled-agent-work-in-tree](postmortems/2026-07-13-stalled-agent-work-in-tree.md)
-
 ## 2026-07-12 · wrong-assumption · high
 **What happened:** An autonomous multi-agent run stalled 8 hours on an invisible permission prompt: agents' `git commit` calls hit an unscoped commit-approval gate, and the first exemption fix failed because it stayed silent instead of emitting an explicit allow.
 **Root cause:** launch skipped preflighting the permission surface of the commands agents would run -> gate was never scoped -> the exemption's silent exit delegated the decision back to an auto-classifier that said "ask".
