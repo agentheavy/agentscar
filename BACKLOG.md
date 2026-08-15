@@ -18,10 +18,10 @@
 - `init` re-run: guard user-customized templates from silent overwrite (v0 overwrites everything except log.md)
 - `init` emits `.agentscar/.okfignore` so fresh bundles lint without orphan INFO noise
 
-- non-interactive `new` (dogfood 14.08: the interview reads stdin, so the primary user — an agent in a harness — cannot drive it; the skill covers the flow, but the CLI itself should take flags or a heredoc)
-- `init --claude --user`: install the skill user-level, not only per-repo (dogfood 14.08: the skill sat uninstalled for 9 days because init only writes ./.claude/skills/)
+- non-interactive `new` (first-user finding 14.08: the interview reads stdin, so the primary user — an agent in a harness — cannot drive it; the skill covers the flow, but the CLI itself should take flags or a heredoc)
+- `init --claude --user`: install the skill user-level, not only per-repo (first-user finding 14.08: the skill sat uninstalled for 9 days because init only writes ./.claude/skills/)
 
-- **push-guard misses the failure it was written for (15.08, reproduced).** The
+- **push-guard misses the failure it was written for (15.08, reproduced; RESOLVED 15.08).** The
   template blocks only non-fast-forward pushes — which git already rejects on its
   own. The actual incident was a conflicted pull resolved with "keep ours": the
   remote commit lands in local history, so `merge-base --is-ancestor` passes, the
@@ -33,5 +33,13 @@
   check comes out empty. A working check has to reach the pre-merge side (the other
   parent of the merge that brought the remote in) and compare content there.
   Blocks the launch claim in post -2 ("I wrote the check that day") until fixed.
+  **Fixed:** the guard now walks every merge in `remote/branch..HEAD`, splits each
+  into its remote-side parent (the one that is an ancestor of the remote tip) and
+  local-side parent, and for every file the remote side changed vs the two parents'
+  merge base it blocks when the merged blob equals the local parent's (remote's
+  distinct change discarded) or the file was deleted while the remote had populated
+  it. Ancestry was necessary but not sufficient — it proves the remote commit is in
+  history, not that its content survived the tree. See `templates/hook-push-guard.sh`
+  and `tests/push-guard.sh` (6 cases, all green).
 
 Every "what if we also..." lands here, not in scope.
