@@ -199,7 +199,7 @@ cmd_init() {
   if [ ! -f "$LOG_FILE" ]; then
     cat > "$LOG_FILE" <<EOF
 ---
-type: postmortem
+type: log
 generated:
   by: agentscar/$VERSION
   at: $TODAY
