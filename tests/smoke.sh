@@ -138,4 +138,14 @@ out="$("$BIN" log --severity critical 2>&1)"; rc=$?
 [ "$rc" -ne 0 ] && printf '%s\n' "$out" | grep -q 'unknown severity'
 check 15 "unknown --severity dies instead of printing an empty log" $?
 
+# t16: embedded template heredocs match the canonical files in templates/
+# byte-for-byte. templates/ is the copy that gets reviewed and tested; the
+# heredoc is the copy that reaches the user. They drifted once already.
+fresh
+"$BIN" init >/dev/null
+diff "$ROOT/templates/hook-push-guard.sh"          .agentscar/templates/hook-push-guard.sh >/dev/null \
+  && diff "$ROOT/templates/hook-confirm-destructive.sh" .agentscar/templates/hook-confirm-destructive.sh >/dev/null \
+  && diff "$ROOT/templates/rule-skeleton.md"       .agentscar/templates/rule-skeleton.md >/dev/null
+check 16 "embedded templates match templates/ byte-for-byte" $?
+
 exit "$fails"
